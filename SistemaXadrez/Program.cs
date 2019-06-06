@@ -1,5 +1,5 @@
 ﻿using System;
-using Tabuleiro;
+using Board;
 
 namespace SistemaXadrez
 {
@@ -7,8 +7,9 @@ namespace SistemaXadrez
     {
         static void Main()
         {
-            Position position = new Position(3, 4);
-            Console.WriteLine(position);
+            BoardClass board = new BoardClass(8, 8);
+            board.PrintBoard();
+            Console.ReadLine();
         }
     }
 }
