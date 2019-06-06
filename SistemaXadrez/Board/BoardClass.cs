@@ -15,6 +15,11 @@ namespace Board
             Pieces = new Piece[lines, columns];
         }
 
+        public void InputPiece(Piece piece, Position pos)
+        {
+            Pieces[pos.Line, pos.Column] = piece;
+        }
+
         public void PrintBoard()
         {
             int number = Columns;
