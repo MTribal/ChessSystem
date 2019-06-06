@@ -1,12 +1,14 @@
 ﻿using System;
+using Tabuleiro;
 
 namespace SistemaXadrez
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
-            Console.WriteLine("Hello World!");
+            Position position = new Position(3, 4);
+            Console.WriteLine(position);
         }
     }
 }
