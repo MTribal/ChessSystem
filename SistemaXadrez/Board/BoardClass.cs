@@ -1,4 +1,5 @@
 ﻿using System;
+using Board.Exceptions;
 
 namespace Board
 {
@@ -15,8 +16,23 @@ namespace Board
             Pieces = new Piece[lines, columns];
         }
 
+        public bool HasPiece(Position pos)
+        {
+            PosValidation(pos);
+            return (Pieces[pos.Line, pos.Column] != null);
+        }
+
+        public void PosValidation(Position pos)
+        {
+            if (pos.Line < 0 || pos.Line >= Lines || pos.Column < 0 || pos.Column >= Columns)
+            {
+                throw new BoardException("Invalid position.");
+            }
+        }
+
         public void InputPiece(Piece piece, Position pos)
         {
+            if (HasPiece(pos)) throw new BoardException("Already exist a piece in that position."); 
             Pieces[pos.Line, pos.Column] = piece;
         }
 
