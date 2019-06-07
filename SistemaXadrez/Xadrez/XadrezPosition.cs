@@ -2,7 +2,7 @@
 
 namespace Xadrez
 {
-    class XadrezPosition
+    sealed class XadrezPosition
     {
         public char Column { get; set; }
         public int Line { get; set; }

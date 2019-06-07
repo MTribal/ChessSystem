@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Board;
 using Board.Enums;
 using Board.Exceptions;
@@ -6,11 +7,12 @@ using Xadrez;
 
 namespace SistemaXadrez
 {
-    class Match
+    sealed class Match
     {
         private BoardClass Board;
         private int TotalTurns;
         private Color Turn;
+        public Status Status { get; private set; }
 
         public Match()
         {
@@ -18,11 +20,70 @@ namespace SistemaXadrez
             TotalTurns = 0;
             Turn = Color.White;
             InputPieces();
+            Status = Status.Started;
         }
 
         public void Atualize()
         {
             Board.PrintBoard();
+        }
+
+        public void MovePiece(XadrezPosition posOrigin, XadrezPosition posDestin)
+        {
+            if (MoveValidation(posOrigin, posDestin))
+            {
+                Piece piece = Board.RemovePiece(posOrigin.ToPosition());
+                Board.InputPiece(piece, posDestin);
+                piece.QttMovements++;
+            }
+            else
+            {
+                throw new BoardException("Invalid destin position.");
+            }
+        }
+
+        private bool MoveValidation(XadrezPosition posOrigin, XadrezPosition posDestin)
+        {
+            if (Board.GetPiece(posOrigin.ToPosition()) == null)
+            {
+                throw new BoardException("Invalid origin position.");
+            }
+            HashSet<Position> possibleMoves = GetValidMoves(Board.GetPiece(posOrigin.ToPosition()));
+            return posDestin.ToPosition().Equals(possibleMoves);
+        }
+
+        private HashSet<Position> GetValidMoves(Piece piece)
+        {
+            HashSet<Position> possibleMoves = new HashSet<Position>();
+            if (piece.Color == Color.White)
+            {
+                if (piece is Pawn) // Pawn
+                {
+                    Position p1 = new Position(piece.Position.Line, piece.Position.Column - 1);
+                    if (ValidatePos(p1))
+                    {
+                        possibleMoves.Add(p1);
+                    }
+                    if (piece.QttMovements == 0)
+                    {
+                        Position p2 = new Position(piece.Position.Line, piece.Position.Column - 2);
+                        if (ValidatePos(p2))
+                        {
+                            possibleMoves.Add(p2);
+                        }
+                    }
+                }
+            }
+            else
+            {
+
+            }
+            return possibleMoves;
+        }
+
+        private bool ValidatePos(Position pos)
+        {
+            return (Board.GetPiece(pos) == null);
         }
 
         private void InputPieces()

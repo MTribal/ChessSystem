@@ -4,7 +4,7 @@ using Board.Exceptions;
 
 namespace Board
 {
-    class BoardClass
+    sealed class BoardClass
     {
         public int Lines { get; set; }
         public int Columns { get; set; }
@@ -34,7 +34,8 @@ namespace Board
         public void InputPiece(Piece piece, XadrezPosition xadrezPos)
         {
             Position pos = xadrezPos.ToPosition();
-            if (HasPiece(pos)) throw new BoardException("Already exist a piece in that position."); 
+            if (HasPiece(pos)) throw new BoardException("Already exist a piece in that position.");
+            piece.Position = pos;
             Pieces[pos.Line, pos.Column] = piece;
         }
 
@@ -48,6 +49,7 @@ namespace Board
 
         public Piece GetPiece(Position pos)
         {
+            PosValidation(pos);
             return Pieces[pos.Line, pos.Column];
         }
 
