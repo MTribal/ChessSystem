@@ -1,4 +1,5 @@
 ﻿using System;
+using Xadrez;
 using Board.Exceptions;
 
 namespace Board
@@ -30,35 +31,60 @@ namespace Board
             }
         }
 
-        public void InputPiece(Piece piece, Position pos)
+        public void InputPiece(Piece piece, XadrezPosition xadrezPos)
         {
+            Position pos = xadrezPos.ToPosition();
             if (HasPiece(pos)) throw new BoardException("Already exist a piece in that position."); 
             Pieces[pos.Line, pos.Column] = piece;
         }
 
+        public Piece RemovePiece(Position pos)
+        {
+            Piece auxPiece = GetPiece(pos);
+            auxPiece.Position = null;
+            Pieces[pos.Line, pos.Column] = null;
+            return auxPiece;
+        }
+
+        public Piece GetPiece(Position pos)
+        {
+            return Pieces[pos.Line, pos.Column];
+        }
+
         public void PrintBoard()
         {
-            int number = Columns;
             for (int c = 0; c < Columns; c++)
             {
-                Console.Write(number + " ");
+                Console.Write(8 - c + " ");
                 for (int c2 = 0; c2 < Lines; c2++)
                 {
                     if (Pieces[c2, c] == null) Console.Write("- ");
-                    else Console.Write(Pieces[c2, c]);
+                    else PrintPiece(Pieces[c2, c]);
                 }
-                number--;
                 Console.WriteLine();
                 if (c == Columns - 1)
                 {
-                    Console.Write("  ");
-                    for (int c3 = 0; c3 < Lines; c3++)
-                    {
-                        Console.Write(Alphabet.alphabet[c3] + " ");
-                    }
+                    Console.WriteLine("  A B C D E F G H");
                 }
             }
-            Console.WriteLine();
+        }
+
+        public void PrintPiece(Piece piece)
+        {
+            if (piece.Color == Enums.Color.White)
+            {
+                ConsoleColor aux = Console.ForegroundColor;
+                Console.ForegroundColor = ConsoleColor.Blue;
+                Console.Write(piece);
+                Console.ForegroundColor = aux;
+            }
+            else
+            {
+                ConsoleColor aux = Console.ForegroundColor;
+                Console.ForegroundColor = ConsoleColor.DarkRed;
+                Console.Write(piece);
+                Console.ForegroundColor = aux;
+            }
         }
     }
 }
