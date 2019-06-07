@@ -7,6 +7,7 @@ namespace Xadrez
     {
         public Bishop(Color color, BoardClass board) : base(color, board)
         {
+            Value = 3;
         }
 
         public override string ToString()

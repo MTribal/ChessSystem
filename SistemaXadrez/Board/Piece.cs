@@ -8,6 +8,7 @@ namespace Board
         public Position Position { get; set; }
         public Color Color { get; protected set; }
         public int QttMovements { get; set; }
+        public int Value { get; protected set; }
         public BoardClass Board { get; protected set; }
 
         public Piece(Color color, BoardClass board)

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using Xadrez;
+using Board.Enums;
 using Board.Exceptions;
 
 namespace Board
@@ -31,10 +33,60 @@ namespace Board
             }
         }
 
+        internal bool InternalValidatePos(Position pos)
+        {
+            if (pos.Line < 0 || pos.Line >= Lines || pos.Column < 0 || pos.Column >= Columns)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        public void InputPiece(Piece piece, XadrezPosition xadrezPos, out int points)
+        {
+            Position pos = xadrezPos.ToPosition();
+            if (HasPiece(pos))
+            {
+                Piece hasPiece = GetPiece(pos);
+                if (hasPiece.Color == piece.Color)
+                {
+                    points = 0;
+                    throw new BoardException("Already exist a piece in that position.");
+                }
+                else
+                {
+                    Piece aux = GetPiece(pos);
+                    if (aux.Color == Color.White)
+                    {
+                        points = aux.Value;
+                    }
+                    else
+                    {
+                        points = aux.Value;
+                    }
+                    RemovePiece(pos);
+                }
+            }
+            else
+            {
+                points = 0;
+            }
+            piece.Position = pos;
+            Pieces[pos.Line, pos.Column] = piece;
+        }
+
         public void InputPiece(Piece piece, XadrezPosition xadrezPos)
         {
             Position pos = xadrezPos.ToPosition();
-            if (HasPiece(pos)) throw new BoardException("Already exist a piece in that position.");
+            if (HasPiece(pos))
+            {
+                Piece hasPiece = GetPiece(pos);
+                if (hasPiece.Color == piece.Color) throw new BoardException("Already exist a piece in that position.");
+                else
+                {
+                    RemovePiece(pos);
+                }
+            }
             piece.Position = pos;
             Pieces[pos.Line, pos.Column] = piece;
         }

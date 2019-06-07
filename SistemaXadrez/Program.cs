@@ -17,6 +17,10 @@ namespace SistemaXadrez
                 {
                     match.Atualize();
                     Console.WriteLine();
+                    Console.WriteLine("Turn nº: " + match.TotalTurns + "\n");
+                    Console.WriteLine("White points: " + match.Points[Color.White.ToString()]);
+                    Console.WriteLine("Black points: " + match.Points[Color.Black.ToString()] + "\n");
+                    Console.WriteLine("Turn: " + match.Turn + "\n");
                     string orig = Input("Origin: ");
                     string dest = Input("Origin: ");
                     XadrezPosition origin = new XadrezPosition(orig[0], int.Parse(orig[1].ToString()));

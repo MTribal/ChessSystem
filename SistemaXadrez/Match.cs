@@ -10,8 +10,9 @@ namespace SistemaXadrez
     sealed class Match
     {
         private BoardClass Board;
-        private int TotalTurns;
-        private Color Turn;
+        public int TotalTurns { get; private set; }
+        public Dictionary<string, int> Points { get; private set; }
+        public Color Turn { get; private set; }
         public Status Status { get; private set; }
 
         public Match()
@@ -21,6 +22,7 @@ namespace SistemaXadrez
             Turn = Color.White;
             InputPieces();
             Status = Status.Started;
+            Points = new Dictionary<string, int>() { { "White", 0}, { "Black", 0} };
         }
 
         public void Atualize()
@@ -33,8 +35,14 @@ namespace SistemaXadrez
             if (MoveValidation(posOrigin, posDestin))
             {
                 Piece piece = Board.RemovePiece(posOrigin.ToPosition());
-                Board.InputPiece(piece, posDestin);
+                int points;
+                Board.InputPiece(piece, posDestin, out points);
+                if (Turn == Color.White) Points[Color.White.ToString()] += points;
+                else Points[Color.Black.ToString()] += points;
                 piece.QttMovements++;
+                TotalTurns++;
+                if (Turn == Color.White) Turn = Color.Black;
+                else Turn = Color.White;
             }
             else
             {
@@ -44,11 +52,17 @@ namespace SistemaXadrez
 
         private bool MoveValidation(XadrezPosition posOrigin, XadrezPosition posDestin)
         {
-            if (Board.GetPiece(posOrigin.ToPosition()) == null)
+            Piece piece = Board.GetPiece(posOrigin.ToPosition());
+            if (piece == null)
             {
                 throw new BoardException("Invalid origin position.");
             }
-            HashSet<Position> possibleMoves = GetValidMoves(Board.GetPiece(posOrigin.ToPosition()));
+            if (piece.Color != Turn)
+            {
+                throw new BoardException("Invalid origin position.");
+            }
+
+            HashSet<Position> possibleMoves = GetValidMoves(piece);
             return posDestin.ToPosition().Equals(possibleMoves);
         }
 
@@ -72,11 +86,62 @@ namespace SistemaXadrez
                             possibleMoves.Add(p2);
                         }
                     }
+                    Position p3 = new Position(piece.Position.Line + 1, piece.Position.Column - 1);
+                    if (Board.InternalValidatePos(p3))
+                    {
+                        Piece piece3 = Board.GetPiece(p3);
+                        if (piece3 != null && piece3.Color != piece.Color)
+                        {
+                            possibleMoves.Add(piece3.Position);
+                        }
+                    }
+                    Position p4 = new Position(piece.Position.Line - 1, piece.Position.Column - 1);
+                    if (Board.InternalValidatePos(p4))
+                    {
+                        Piece piece4 = Board.GetPiece(p4);
+                        if (piece4 != null && piece4.Color != piece.Color)
+                        {
+                            possibleMoves.Add(piece4.Position);
+                        }
+                    }
                 }
             }
             else
             {
-
+                if (piece is Pawn) // Pawn
+                {
+                    Position p1 = new Position(piece.Position.Line, piece.Position.Column + 1);
+                    if (ValidatePos(p1))
+                    {
+                        possibleMoves.Add(p1);
+                    }
+                    if (piece.QttMovements == 0)
+                    {
+                        Position p2 = new Position(piece.Position.Line, piece.Position.Column + 2);
+                        if (ValidatePos(p2))
+                        {
+                            possibleMoves.Add(p2);
+                        }
+                    }
+                    Position p3 = new Position(piece.Position.Line + 1, piece.Position.Column + 1);
+                    if (Board.InternalValidatePos(p3))
+                    {
+                        Piece piece3 = Board.GetPiece(p3);
+                        if (piece3 != null && piece3.Color != piece.Color)
+                        {
+                            possibleMoves.Add(piece3.Position);
+                        }
+                    }
+                    Position p4 = new Position(piece.Position.Line - 1, piece.Position.Column + 1);
+                    if (Board.InternalValidatePos(p4))
+                    {
+                        Piece piece4 = Board.GetPiece(p4);
+                        if (piece4 != null && piece4.Color != piece.Color)
+                        {
+                            possibleMoves.Add(piece4.Position);
+                        }
+                    }
+                }
             }
             return possibleMoves;
         }
