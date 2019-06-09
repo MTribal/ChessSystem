@@ -10,7 +10,7 @@ namespace Board
     {
         public int Lines { get; set; }
         public int Columns { get; set; }
-        private Piece[,] Pieces;
+        internal Piece[,] Pieces { get; private set; }
 
         public BoardClass(int lines, int columns)
         {
@@ -29,7 +29,7 @@ namespace Board
         {
             if (pos.Line < 0 || pos.Line >= Lines || pos.Column < 0 || pos.Column >= Columns)
             {
-                throw new BoardException("Invalid position.");
+                throw new BoardException("Invalid positioooooooon.");
             }
         }
 
@@ -42,9 +42,8 @@ namespace Board
             return true;
         }
 
-        public void InputPiece(Piece piece, XadrezPosition xadrezPos, out int points)
+        public void InputPiece(Piece piece, Position pos, out int points)
         {
-            Position pos = xadrezPos.ToPosition();
             if (HasPiece(pos))
             {
                 Piece hasPiece = GetPiece(pos);
@@ -73,9 +72,8 @@ namespace Board
             Pieces[pos.Line, pos.Column] = piece;
         }
 
-        public void InputPiece(Piece piece, XadrezPosition xadrezPos)
+        public void InputPiece(Piece piece, Position pos)
         {
-            Position pos = xadrezPos.ToPosition();
             if (HasPiece(pos))
             {
                 Piece hasPiece = GetPiece(pos);

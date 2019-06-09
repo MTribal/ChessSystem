@@ -12,6 +12,8 @@ namespace SistemaXadrez
         private BoardClass Board;
         private Position Enpassant;
         private Position EnpassantCapture;
+        private Position MinRock;
+        private Position MaxRock;
         public int TotalTurns { get; private set; }
         public Dictionary<string, int> Points { get; private set; }
         public Color Turn { get; private set; }
@@ -24,6 +26,8 @@ namespace SistemaXadrez
             Turn = Color.White;
             Enpassant = null;
             EnpassantCapture = null;
+            MinRock = null;
+            MaxRock = null;
             InputPieces();
             Status = Status.Started;
             Points = new Dictionary<string, int>() { { "White", 0 }, { "Black", 0 } };
@@ -39,10 +43,10 @@ namespace SistemaXadrez
             if (MoveValidation(posOrigin, posDestin))
             {
                 Piece piece = Board.RemovePiece(posOrigin.ToPosition());
+                Position pOrigin = posOrigin.ToPosition();
+                Position pDestin = posDestin.ToPosition();
                 if (piece is Pawn)
                 {
-                    Position pOrigin = posOrigin.ToPosition();
-                    Position pDestin = posDestin.ToPosition();
                     if (EnpassantCapture != null)
                     {
                         if (pDestin.Equals(EnpassantCapture))
@@ -64,8 +68,26 @@ namespace SistemaXadrez
                     }
                 }
                 else Enpassant = null;
+                if (piece is King)
+                {
+                    if (pDestin.Equals(MinRock))
+                    {
+                        Piece tower = Board.RemovePiece(new Position(pDestin.Line + 1, pDestin.Column));
+                        Board.InputPiece(tower, new Position(pDestin.Line - 1, pDestin.Column));
+                    }
+                    else if (pDestin.Equals(MaxRock))
+                    {
+                        Piece tower = Board.RemovePiece(new Position(pDestin.Line - 2, pDestin.Column));
+                        Board.InputPiece(tower, new Position(pDestin.Line + 1, pDestin.Column));
+                    }
+                }
+                else
+                {
+                    MinRock = null;
+                    MaxRock = null;
+                }
                 int points;
-                Board.InputPiece(piece, posDestin, out points);
+                Board.InputPiece(piece, posDestin.ToPosition(), out points);
                 if (Turn == Color.White) Points[Color.White.ToString()] += points;
                 else Points[Color.Black.ToString()] += points;
                 piece.QttMovements++;
@@ -116,6 +138,8 @@ namespace SistemaXadrez
                 return QueenValidMoves(piece);
             else if (piece is Knigth)
                 return KnightValidMoves(piece);
+            else if (piece is King)
+                return KingValidMoves(piece, false);
             else
                 return new HashSet<Position>();
         }
@@ -223,7 +247,7 @@ namespace SistemaXadrez
             HashSet<Position> possibleMoves = new HashSet<Position>();
             int line = bishop.Position.Line;
             int column = bishop.Position.Column;
-            while (true) 
+            while (true)
             {
                 line++;
                 column++;
@@ -246,7 +270,7 @@ namespace SistemaXadrez
 
             line = bishop.Position.Line;
             column = bishop.Position.Column;
-            while (true) 
+            while (true)
             {
                 line--;
                 column++;
@@ -443,6 +467,103 @@ namespace SistemaXadrez
             return possibleMoves;
         }
 
+        private HashSet<Position> KingValidMoves(Piece king, bool gambiarra)
+        {
+            int line = king.Position.Line;
+            int column = king.Position.Column;
+            HashSet<Position> possibleMoves = new HashSet<Position>();
+            HashSet<Position> pendentMoves = new HashSet<Position>
+            {
+                new Position(line + 1, column + 1),
+                new Position(line - 1, column + 1),
+                new Position(line + 1, column - 1),
+                new Position(line - 1, column- 1),
+                new Position(line, column + 1),
+                new Position(line, column - 1),
+                new Position(line - 1, column),
+                new Position(line + 1, column),
+            };
+            foreach (Position pos in pendentMoves)
+            {
+                if (Board.InternalValidatePos(pos))
+                {
+                    Piece piece = Board.GetPiece(pos);
+                    if (piece == null || piece.Color != king.Color)
+                        possibleMoves.Add(pos);
+                }
+            }
+            Piece minRock3 = Board.GetPiece(new Position(line + 3, column));
+            Piece minRock2 = Board.GetPiece(new Position(line + 2, column));
+            Piece minRock1 = Board.GetPiece(new Position(line + 1, column));
+
+            Piece maxRock4 = Board.GetPiece(new Position(line - 4, column));
+            Piece maxRock3 = Board.GetPiece(new Position(line - 3, column));
+            Piece maxRock2 = Board.GetPiece(new Position(line - 2, column));
+            Piece maxRock1 = Board.GetPiece(new Position(line - 1, column));
+            if (gambiarra == false)
+            {
+                if (king.QttMovements == 0 && minRock1 == null && minRock2 == null &&
+                            minRock3 is Tower && minRock3.QttMovements == 0 &&
+                            !(ExisteChecks(new Position(line + 1, column), king.Color)) &&
+                            !(ExisteChecks(new Position(line + 2, column), king.Color)))
+                {
+                    MinRock = new Position(line + 2, column);
+                    possibleMoves.Add(MinRock);
+                }
+                else
+                    MinRock = null;
+                if (king.QttMovements == 0 && maxRock1 == null && maxRock2 == null & maxRock3 == null
+                            && maxRock4 is Tower && maxRock4.QttMovements == 0 &&
+                            !(ExisteChecks(new Position(line - 1, column), king.Color)) &&
+                            !(ExisteChecks(new Position(line - 2, column), king.Color)))
+                {
+                    MaxRock = new Position(line - 2, column);
+                    possibleMoves.Add(MaxRock);
+                }
+                else
+                    MaxRock = null;
+            }
+            return possibleMoves;
+        }
+
+        private bool ExisteChecks(Position king, Color color)
+        {
+            HashSet<Position> possibleMoves;
+            for (int c = 0; c < Board.Lines; c++)
+            {
+                for (int c2 = 0; c2 < Board.Columns; c2++)
+                {
+                    Piece piece = Board.GetPiece(new Position(c, c2));
+                    if (piece != null)
+                    {
+                        if (piece.Color != color)
+                        {
+                            if (piece is Pawn)
+                                possibleMoves = PawnValidMoves(piece);
+                            else if (piece is Bishop)
+                                possibleMoves = BishopValidMoves(piece);
+                            else if (piece is Tower)
+                                possibleMoves = TowerValidMoves(piece);
+                            else if (piece is Queen)
+                                possibleMoves = QueenValidMoves(piece);
+                            else if (piece is Knigth)
+                                possibleMoves = KnightValidMoves(piece);
+                            else if (piece is King)
+                                possibleMoves = KingValidMoves(piece, true);
+                            else
+                                possibleMoves = new HashSet<Position>();
+                        }
+                        else
+                            possibleMoves = new HashSet<Position>();
+
+                        if (king.Equals(possibleMoves))
+                            return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         public void PrintBoard(HashSet<Position> positions)
         {
             Board.PrintBoard(positions);
@@ -460,39 +581,39 @@ namespace SistemaXadrez
 
         private void InputPieces()
         {
-            Board.InputPiece(new Tower(Color.White, Board), new XadrezPosition('a', 1));
-            Board.InputPiece(new Knigth(Color.White, Board), new XadrezPosition('b', 1));
-            Board.InputPiece(new Bishop(Color.White, Board), new XadrezPosition('c', 1));
-            Board.InputPiece(new Queen(Color.White, Board), new XadrezPosition('d', 1));
-            Board.InputPiece(new King(Color.White, Board), new XadrezPosition('e', 1));
-            Board.InputPiece(new Bishop(Color.White, Board), new XadrezPosition('f', 1));
-            Board.InputPiece(new Knigth(Color.White, Board), new XadrezPosition('g', 1));
-            Board.InputPiece(new Tower(Color.White, Board), new XadrezPosition('h', 1));
-            Board.InputPiece(new Pawn(Color.White, Board), new XadrezPosition('a', 2));
-            Board.InputPiece(new Pawn(Color.White, Board), new XadrezPosition('b', 2));
-            Board.InputPiece(new Pawn(Color.White, Board), new XadrezPosition('c', 2));
-            Board.InputPiece(new Pawn(Color.White, Board), new XadrezPosition('d', 2));
-            Board.InputPiece(new Pawn(Color.White, Board), new XadrezPosition('e', 2));
-            Board.InputPiece(new Pawn(Color.White, Board), new XadrezPosition('f', 2));
-            Board.InputPiece(new Pawn(Color.White, Board), new XadrezPosition('g', 2));
-            Board.InputPiece(new Pawn(Color.White, Board), new XadrezPosition('h', 2));
+            Board.InputPiece(new Tower(Color.White, Board), new XadrezPosition('a', 1).ToPosition());
+            Board.InputPiece(new Knigth(Color.White, Board), new XadrezPosition('b', 1).ToPosition());
+            Board.InputPiece(new Bishop(Color.White, Board), new XadrezPosition('c', 1).ToPosition());
+            Board.InputPiece(new Queen(Color.White, Board), new XadrezPosition('d', 1).ToPosition());
+            Board.InputPiece(new King(Color.White, Board), new XadrezPosition('e', 1).ToPosition());
+            Board.InputPiece(new Bishop(Color.White, Board), new XadrezPosition('f', 1).ToPosition());
+            Board.InputPiece(new Knigth(Color.White, Board), new XadrezPosition('g', 1).ToPosition());
+            Board.InputPiece(new Tower(Color.White, Board), new XadrezPosition('h', 1).ToPosition());
+            Board.InputPiece(new Pawn(Color.White, Board), new XadrezPosition('a', 2).ToPosition());
+            Board.InputPiece(new Pawn(Color.White, Board), new XadrezPosition('b', 2).ToPosition());
+            Board.InputPiece(new Pawn(Color.White, Board), new XadrezPosition('c', 2).ToPosition());
+            Board.InputPiece(new Pawn(Color.White, Board), new XadrezPosition('d', 2).ToPosition());
+            Board.InputPiece(new Pawn(Color.White, Board), new XadrezPosition('e', 2).ToPosition());
+            Board.InputPiece(new Pawn(Color.White, Board), new XadrezPosition('f', 2).ToPosition());
+            Board.InputPiece(new Pawn(Color.White, Board), new XadrezPosition('g', 2).ToPosition());
+            Board.InputPiece(new Pawn(Color.White, Board), new XadrezPosition('h', 2).ToPosition());
 
-            Board.InputPiece(new Tower(Color.Black, Board), new XadrezPosition('a', 8));
-            Board.InputPiece(new Knigth(Color.Black, Board), new XadrezPosition('b', 8));
-            Board.InputPiece(new Bishop(Color.Black, Board), new XadrezPosition('c', 8));
-            Board.InputPiece(new Queen(Color.Black, Board), new XadrezPosition('d', 8));
-            Board.InputPiece(new King(Color.Black, Board), new XadrezPosition('e', 8));
-            Board.InputPiece(new Bishop(Color.Black, Board), new XadrezPosition('f', 8));
-            Board.InputPiece(new Knigth(Color.Black, Board), new XadrezPosition('g', 8));
-            Board.InputPiece(new Tower(Color.Black, Board), new XadrezPosition('h', 8));
-            Board.InputPiece(new Pawn(Color.Black, Board), new XadrezPosition('a', 7));
-            Board.InputPiece(new Pawn(Color.Black, Board), new XadrezPosition('b', 7));
-            Board.InputPiece(new Pawn(Color.Black, Board), new XadrezPosition('c', 7));
-            Board.InputPiece(new Pawn(Color.Black, Board), new XadrezPosition('d', 7));
-            Board.InputPiece(new Pawn(Color.Black, Board), new XadrezPosition('e', 7));
-            Board.InputPiece(new Pawn(Color.Black, Board), new XadrezPosition('f', 7));
-            Board.InputPiece(new Pawn(Color.Black, Board), new XadrezPosition('g', 7));
-            Board.InputPiece(new Pawn(Color.Black, Board), new XadrezPosition('h', 7));
+            Board.InputPiece(new Tower(Color.Black, Board), new XadrezPosition('a', 8).ToPosition());
+            Board.InputPiece(new Knigth(Color.Black, Board), new XadrezPosition('b', 8).ToPosition());
+            Board.InputPiece(new Bishop(Color.Black, Board), new XadrezPosition('c', 8).ToPosition());
+            Board.InputPiece(new Queen(Color.Black, Board), new XadrezPosition('d', 8).ToPosition());
+            Board.InputPiece(new King(Color.Black, Board), new XadrezPosition('e', 8).ToPosition());
+            Board.InputPiece(new Bishop(Color.Black, Board), new XadrezPosition('f', 8).ToPosition());
+            Board.InputPiece(new Knigth(Color.Black, Board), new XadrezPosition('g', 8).ToPosition());
+            Board.InputPiece(new Tower(Color.Black, Board), new XadrezPosition('h', 8).ToPosition());
+            Board.InputPiece(new Pawn(Color.Black, Board), new XadrezPosition('a', 7).ToPosition());
+            Board.InputPiece(new Pawn(Color.Black, Board), new XadrezPosition('b', 7).ToPosition());
+            Board.InputPiece(new Pawn(Color.Black, Board), new XadrezPosition('c', 7).ToPosition());
+            Board.InputPiece(new Pawn(Color.Black, Board), new XadrezPosition('d', 7).ToPosition());
+            Board.InputPiece(new Pawn(Color.Black, Board), new XadrezPosition('e', 7).ToPosition());
+            Board.InputPiece(new Pawn(Color.Black, Board), new XadrezPosition('f', 7).ToPosition());
+            Board.InputPiece(new Pawn(Color.Black, Board), new XadrezPosition('g', 7).ToPosition());
+            Board.InputPiece(new Pawn(Color.Black, Board), new XadrezPosition('h', 7).ToPosition());
         }
     }
 }

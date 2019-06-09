@@ -7,7 +7,7 @@ using Xadrez;
 
 namespace SistemaXadrez
 {
-    sealed class Program
+    abstract class Program
     {
         static void Main()
         {
