@@ -94,6 +94,7 @@ namespace Board
         public Piece RemovePiece(Position pos)
         {
             Piece auxPiece = GetPiece(pos);
+            if (auxPiece == null) throw new BoardException("Error at remove piece function -- (pos == null)");
             auxPiece.Position = null;
             Pieces[pos.Line, pos.Column] = null;
             return auxPiece;
@@ -107,6 +108,8 @@ namespace Board
 
         public void PrintBoard()
         {
+            ConsoleColor color = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
             for (int c = 0; c < Columns; c++)
             {
                 Console.Write(8 - c + " ");
@@ -121,6 +124,33 @@ namespace Board
                     Console.WriteLine("  A B C D E F G H");
                 }
             }
+            Console.ForegroundColor = color;
+        }
+
+        public void PrintBoard(HashSet<Position> positions)
+        {
+            ConsoleColor backColor = Console.BackgroundColor;
+            ConsoleColor color = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.DarkGreen;
+            for (int c = 0; c < Columns; c++)
+            {
+                Console.Write(8 - c + " ");
+                for (int c2 = 0; c2 < Lines; c2++)
+                {
+                    Position p = new Position(c2, c);
+                    if (p.Equals(positions)) Console.BackgroundColor = ConsoleColor.DarkGray; // Change color
+                    if (Pieces[c2, c] == null) Console.Write("- ");
+                    else PrintPiece(Pieces[c2, c]);
+
+                    Console.BackgroundColor = backColor; // Change color
+                }
+                Console.WriteLine();
+                if (c == Columns - 1)
+                {
+                    Console.WriteLine("  A B C D E F G H");
+                }
+            }
+            Console.ForegroundColor = color;
         }
 
         public void PrintPiece(Piece piece)

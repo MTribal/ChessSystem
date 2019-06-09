@@ -10,6 +10,8 @@ namespace SistemaXadrez
     sealed class Match
     {
         private BoardClass Board;
+        private Position Enpassant;
+        private Position EnpassantCapture;
         public int TotalTurns { get; private set; }
         public Dictionary<string, int> Points { get; private set; }
         public Color Turn { get; private set; }
@@ -20,9 +22,11 @@ namespace SistemaXadrez
             Board = new BoardClass(8, 8);
             TotalTurns = 0;
             Turn = Color.White;
+            Enpassant = null;
+            EnpassantCapture = null;
             InputPieces();
             Status = Status.Started;
-            Points = new Dictionary<string, int>() { { "White", 0}, { "Black", 0} };
+            Points = new Dictionary<string, int>() { { "White", 0 }, { "Black", 0 } };
         }
 
         public void Atualize()
@@ -35,6 +39,25 @@ namespace SistemaXadrez
             if (MoveValidation(posOrigin, posDestin))
             {
                 Piece piece = Board.RemovePiece(posOrigin.ToPosition());
+                if (piece is Pawn)
+                {
+                    Position pOrigin = posOrigin.ToPosition();
+                    Position pDestin = posDestin.ToPosition();
+                    if (EnpassantCapture != null)
+                    {
+                        if (pDestin.Equals(EnpassantCapture))
+                        {
+                            Board.RemovePiece(Enpassant);
+                        }
+                    }
+                    if (pOrigin.Column - pDestin.Column == 2 || pDestin.Column - pOrigin.Column == 2)
+                    {
+                        Enpassant = posDestin.ToPosition();
+                    }
+                    else
+                        Enpassant = null;
+                }
+                else Enpassant = null;
                 int points;
                 Board.InputPiece(piece, posDestin, out points);
                 if (Turn == Color.White) Points[Color.White.ToString()] += points;
@@ -66,89 +89,134 @@ namespace SistemaXadrez
             return posDestin.ToPosition().Equals(possibleMoves);
         }
 
+        public HashSet<Position> GetValidMoves(Position pos)
+        {
+            if (Board.HasPiece(pos))
+            {
+                return GetValidMoves(Board.GetPiece(pos));
+            }
+            return new HashSet<Position>();
+        }
+
         private HashSet<Position> GetValidMoves(Piece piece)
         {
+            if (piece is Pawn) return PawnValidMoves((Pawn)piece);
+            else return new HashSet<Position>();
+        }
+
+        private HashSet<Position> PawnValidMoves(Pawn pawn)
+        {
             HashSet<Position> possibleMoves = new HashSet<Position>();
-            if (piece.Color == Color.White)
+            if (Enpassant != null)
             {
-                if (piece is Pawn) // Pawn
+                if ((sbyte)(pawn.Position.Line - Enpassant.Line) == 1 && pawn.Position.Column == Enpassant.Column)
                 {
-                    Position p1 = new Position(piece.Position.Line, piece.Position.Column - 1);
-                    if (ValidatePos(p1))
+                    if (pawn.Color == Color.White)
                     {
-                        possibleMoves.Add(p1);
+                        Position p = new Position(Enpassant.Line, Enpassant.Column - 1);
+                        possibleMoves.Add(p);
+                        EnpassantCapture = p;
                     }
-                    if (piece.QttMovements == 0)
+                    else
                     {
-                        Position p2 = new Position(piece.Position.Line, piece.Position.Column - 2);
-                        if (ValidatePos(p2))
-                        {
-                            possibleMoves.Add(p2);
-                        }
+                        Position p = new Position(Enpassant.Line, Enpassant.Column + 1);
+                        possibleMoves.Add(p);
+                        EnpassantCapture = p;
                     }
-                    Position p3 = new Position(piece.Position.Line + 1, piece.Position.Column - 1);
-                    if (Board.InternalValidatePos(p3))
+                }
+                else
+                    EnpassantCapture = null;
+            }
+            else
+                EnpassantCapture = null;
+            
+            if (pawn.Color == Color.White)
+            {
+                Position p1 = new Position(pawn.Position.Line, pawn.Position.Column - 1);
+                if (ValidatePos(p1))
+                {
+                    possibleMoves.Add(p1);
+                }
+                if (pawn.QttMovements == 0)
+                {
+                    Position p2 = new Position(pawn.Position.Line, pawn.Position.Column - 2);
+                    if (ValidatePos(p2))
                     {
-                        Piece piece3 = Board.GetPiece(p3);
-                        if (piece3 != null && piece3.Color != piece.Color)
-                        {
-                            possibleMoves.Add(piece3.Position);
-                        }
+                        possibleMoves.Add(p2);
                     }
-                    Position p4 = new Position(piece.Position.Line - 1, piece.Position.Column - 1);
-                    if (Board.InternalValidatePos(p4))
+                }
+                Position p3 = new Position(pawn.Position.Line + 1, pawn.Position.Column - 1);
+                if (Board.InternalValidatePos(p3))
+                {
+                    Piece piece3 = Board.GetPiece(p3);
+                    if (piece3 != null && piece3.Color != pawn.Color)
                     {
-                        Piece piece4 = Board.GetPiece(p4);
-                        if (piece4 != null && piece4.Color != piece.Color)
-                        {
-                            possibleMoves.Add(piece4.Position);
-                        }
+                        possibleMoves.Add(piece3.Position);
+                    }
+                }
+                Position p4 = new Position(pawn.Position.Line - 1, pawn.Position.Column - 1);
+                if (Board.InternalValidatePos(p4))
+                {
+                    Piece piece4 = Board.GetPiece(p4);
+                    if (piece4 != null && piece4.Color != pawn.Color)
+                    {
+                        possibleMoves.Add(piece4.Position);
                     }
                 }
             }
             else
             {
-                if (piece is Pawn) // Pawn
+                Position p1 = new Position(pawn.Position.Line, pawn.Position.Column + 1);
+                if (ValidatePos(p1))
                 {
-                    Position p1 = new Position(piece.Position.Line, piece.Position.Column + 1);
-                    if (ValidatePos(p1))
+                    possibleMoves.Add(p1);
+                }
+                if (pawn.QttMovements == 0)
+                {
+                    Position p2 = new Position(pawn.Position.Line, pawn.Position.Column + 2);
+                    if (ValidatePos(p2))
                     {
-                        possibleMoves.Add(p1);
+                        possibleMoves.Add(p2);
                     }
-                    if (piece.QttMovements == 0)
+                }
+                Position p3 = new Position(pawn.Position.Line + 1, pawn.Position.Column + 1);
+                if (Board.InternalValidatePos(p3))
+                {
+                    Piece piece3 = Board.GetPiece(p3);
+                    if (piece3 != null && piece3.Color != pawn.Color)
                     {
-                        Position p2 = new Position(piece.Position.Line, piece.Position.Column + 2);
-                        if (ValidatePos(p2))
-                        {
-                            possibleMoves.Add(p2);
-                        }
+                        possibleMoves.Add(piece3.Position);
                     }
-                    Position p3 = new Position(piece.Position.Line + 1, piece.Position.Column + 1);
-                    if (Board.InternalValidatePos(p3))
+                }
+                Position p4 = new Position(pawn.Position.Line - 1, pawn.Position.Column + 1);
+                if (Board.InternalValidatePos(p4))
+                {
+                    Piece piece4 = Board.GetPiece(p4);
+                    if (piece4 != null && piece4.Color != pawn.Color)
                     {
-                        Piece piece3 = Board.GetPiece(p3);
-                        if (piece3 != null && piece3.Color != piece.Color)
-                        {
-                            possibleMoves.Add(piece3.Position);
-                        }
-                    }
-                    Position p4 = new Position(piece.Position.Line - 1, piece.Position.Column + 1);
-                    if (Board.InternalValidatePos(p4))
-                    {
-                        Piece piece4 = Board.GetPiece(p4);
-                        if (piece4 != null && piece4.Color != piece.Color)
-                        {
-                            possibleMoves.Add(piece4.Position);
-                        }
+                        possibleMoves.Add(piece4.Position);
                     }
                 }
             }
+
             return possibleMoves;
+        }
+
+        
+
+        public void PrintBoard(HashSet<Position> positions)
+        {
+            Board.PrintBoard(positions);
         }
 
         private bool ValidatePos(Position pos)
         {
             return (Board.GetPiece(pos) == null);
+        }
+
+        public bool ValidateMoveTurn(Position pos)
+        {
+            return (Board.GetPiece(pos).Color == Turn);
         }
 
         private void InputPieces()
