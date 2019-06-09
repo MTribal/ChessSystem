@@ -100,11 +100,19 @@ namespace SistemaXadrez
 
         private HashSet<Position> GetValidMoves(Piece piece)
         {
-            if (piece is Pawn) return PawnValidMoves((Pawn)piece);
-            else return new HashSet<Position>();
+            if (piece is Pawn)
+                return PawnValidMoves(piece);
+            else if (piece is Bishop)
+                return BishopValidMoves(piece);
+            else if (piece is Tower)
+                return TowerValidMoves(piece);
+            else if (piece is Queen)
+                return QueenValidMoves(piece);
+            else
+                return new HashSet<Position>();
         }
 
-        private HashSet<Position> PawnValidMoves(Pawn pawn)
+        private HashSet<Position> PawnValidMoves(Piece pawn)
         {
             HashSet<Position> possibleMoves = new HashSet<Position>();
             if (Enpassant != null)
@@ -129,7 +137,7 @@ namespace SistemaXadrez
             }
             else
                 EnpassantCapture = null;
-            
+
             if (pawn.Color == Color.White)
             {
                 Position p1 = new Position(pawn.Position.Line, pawn.Position.Column - 1);
@@ -202,7 +210,204 @@ namespace SistemaXadrez
             return possibleMoves;
         }
 
-        
+        private HashSet<Position> BishopValidMoves(Piece bishop)
+        {
+            HashSet<Position> possibleMoves = new HashSet<Position>();
+            int line = bishop.Position.Line;
+            int column = bishop.Position.Column;
+            while (true) 
+            {
+                line++;
+                column++;
+                Position pos = new Position(line, column);
+                if (Board.InternalValidatePos(pos))
+                {
+                    Piece piece = Board.GetPiece(pos);
+                    if (piece != null)
+                    {
+                        if (piece.Color == bishop.Color)
+                            break;
+                        possibleMoves.Add(new Position(line, column));
+                        break;
+                    }
+                    possibleMoves.Add(new Position(line, column));
+                }
+                else
+                    break;
+            }  // Pra -> e Pra baixo
+
+            line = bishop.Position.Line;
+            column = bishop.Position.Column;
+            while (true) 
+            {
+                line--;
+                column++;
+                Position pos = new Position(line, column);
+                if (Board.InternalValidatePos(pos))
+                {
+                    Piece piece = Board.GetPiece(pos);
+                    if (piece != null)
+                    {
+                        if (piece.Color == bishop.Color)
+                            break;
+                        possibleMoves.Add(new Position(line, column));
+                        break;
+                    }
+                    possibleMoves.Add(new Position(line, column));
+                }
+                else
+                    break;
+            }  // Pra <- e Pra baixo
+
+            line = bishop.Position.Line;
+            column = bishop.Position.Column;
+            while (true)
+            {
+                line--;
+                column--;
+                Position pos = new Position(line, column);
+                if (Board.InternalValidatePos(pos))
+                {
+                    Piece piece = Board.GetPiece(pos);
+                    if (piece != null)
+                    {
+                        if (piece.Color == bishop.Color)
+                            break;
+                        possibleMoves.Add(new Position(line, column));
+                        break;
+                    }
+                    possibleMoves.Add(new Position(line, column));
+                }
+                else
+                    break;
+            }  // Pra <- e Pra Cima
+
+            line = bishop.Position.Line;
+            column = bishop.Position.Column;
+            while (true)
+            {
+                line++;
+                column--;
+                Position pos = new Position(line, column);
+                if (Board.InternalValidatePos(pos))
+                {
+                    Piece piece = Board.GetPiece(pos);
+                    if (piece != null)
+                    {
+                        if (piece.Color == bishop.Color)
+                            break;
+                        possibleMoves.Add(new Position(line, column));
+                        break;
+                    }
+                    possibleMoves.Add(new Position(line, column));
+                }
+                else
+                    break;
+            }  // Pra -> e Pra Cima
+
+            return possibleMoves;
+        }
+
+        private HashSet<Position> TowerValidMoves(Piece tower)
+        {
+            HashSet<Position> possibleMoves = new HashSet<Position>();
+            int line = tower.Position.Line;
+            int column = tower.Position.Column;
+            while (true)
+            {
+                line++;
+                Position pos = new Position(line, column);
+                if (Board.InternalValidatePos(pos))
+                {
+                    Piece piece = Board.GetPiece(pos);
+                    if (piece != null)
+                    {
+                        if (piece.Color == tower.Color)
+                            break;
+                        possibleMoves.Add(new Position(line, column));
+                        break;
+                    }
+                    possibleMoves.Add(new Position(line, column));
+                }
+                else
+                    break;
+            }  // Pra ->
+
+            line = tower.Position.Line;
+            column = tower.Position.Column;
+            while (true)
+            {
+                column++;
+                Position pos = new Position(line, column);
+                if (Board.InternalValidatePos(pos))
+                {
+                    Piece piece = Board.GetPiece(pos);
+                    if (piece != null)
+                    {
+                        if (piece.Color == tower.Color)
+                            break;
+                        possibleMoves.Add(new Position(line, column));
+                        break;
+                    }
+                    possibleMoves.Add(new Position(line, column));
+                }
+                else
+                    break;
+            }  // Pra baixo
+
+            line = tower.Position.Line;
+            column = tower.Position.Column;
+            while (true)
+            {
+                line--;
+                Position pos = new Position(line, column);
+                if (Board.InternalValidatePos(pos))
+                {
+                    Piece piece = Board.GetPiece(pos);
+                    if (piece != null)
+                    {
+                        if (piece.Color == tower.Color)
+                            break;
+                        possibleMoves.Add(new Position(line, column));
+                        break;
+                    }
+                    possibleMoves.Add(new Position(line, column));
+                }
+                else
+                    break;
+            }  // Pra <-
+
+            line = tower.Position.Line;
+            column = tower.Position.Column;
+            while (true)
+            {
+                column--;
+                Position pos = new Position(line, column);
+                if (Board.InternalValidatePos(pos))
+                {
+                    Piece piece = Board.GetPiece(pos);
+                    if (piece != null)
+                    {
+                        if (piece.Color == tower.Color)
+                            break;
+                        possibleMoves.Add(new Position(line, column));
+                        break;
+                    }
+                    possibleMoves.Add(new Position(line, column));
+                }
+                else
+                    break;
+            }  // Pra Cima
+
+            return possibleMoves;
+        }
+
+        private HashSet<Position> QueenValidMoves(Piece queen)
+        {
+            HashSet<Position> possibleMoves = BishopValidMoves(queen);
+            possibleMoves.UnionWith(TowerValidMoves(queen));
+            return possibleMoves;
+        }
 
         public void PrintBoard(HashSet<Position> positions)
         {
