@@ -50,7 +50,6 @@ namespace Board
                 Piece hasPiece = GetPiece(pos);
                 if (hasPiece.Color == piece.Color)
                 {
-                    points = 0;
                     throw new BoardException("Already exist a piece in that position.");
                 }
                 else
@@ -68,9 +67,8 @@ namespace Board
                 }
             }
             else
-            {
                 points = 0;
-            }
+            
             piece.Position = pos;
             Pieces[pos.Line, pos.Column] = piece;
         }

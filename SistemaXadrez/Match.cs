@@ -56,6 +56,12 @@ namespace SistemaXadrez
                     }
                     else
                         Enpassant = null;
+                    if (pDestin.Column == 0 || pDestin.Column == 7)
+                    {
+                        piece = new Queen(piece.Color, Board);
+                        if (Turn == Color.White) Points[Color.White.ToString()] += 9;
+                        else Points[Color.Black.ToString()] += 9;
+                    }
                 }
                 else Enpassant = null;
                 int points;
@@ -108,6 +114,8 @@ namespace SistemaXadrez
                 return TowerValidMoves(piece);
             else if (piece is Queen)
                 return QueenValidMoves(piece);
+            else if (piece is Knigth)
+                return KnightValidMoves(piece);
             else
                 return new HashSet<Position>();
         }
@@ -406,6 +414,32 @@ namespace SistemaXadrez
         {
             HashSet<Position> possibleMoves = BishopValidMoves(queen);
             possibleMoves.UnionWith(TowerValidMoves(queen));
+            return possibleMoves;
+        }
+
+        private HashSet<Position> KnightValidMoves(Piece knight)
+        {
+            HashSet<Position> possibleMoves = new HashSet<Position>();
+            int line = knight.Position.Line;
+            int column = knight.Position.Column;
+            HashSet<Position> pendentMoves = new HashSet<Position>();
+            pendentMoves.Add(new Position(line + 1, column - 2));
+            pendentMoves.Add(new Position(line - 1, column - 2));
+            pendentMoves.Add(new Position(line + 2, column - 1));
+            pendentMoves.Add(new Position(line + 2, column + 1));
+            pendentMoves.Add(new Position(line - 2, column - 1));
+            pendentMoves.Add(new Position(line - 2, column + 1));
+            pendentMoves.Add(new Position(line + 1, column + 2));
+            pendentMoves.Add(new Position(line - 1, column + 2));
+            foreach (Position pos in pendentMoves)
+            {
+                if (Board.InternalValidatePos(pos))
+                {
+                    Piece piece = Board.GetPiece(pos);
+                    if (piece == null || piece.Color != knight.Color)
+                        possibleMoves.Add(pos);
+                }
+            }
             return possibleMoves;
         }
 
